@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -226,8 +226,14 @@ async def login(user: UserLogin):
 
 # Category routes
 @api_router.get("/categories", response_model=List[Category])
-async def get_categories():
-    categories = await db.categories.find({}, {"_id": 0}).sort("order", 1).to_list(1000)
+async def get_categories(page: Optional[int] = Query(None, ge=1), limit: Optional[int] = Query(None, ge=1)):
+    cursor = db.categories.find({}, {"_id": 0}).sort("order", 1)
+    p = page if isinstance(page, int) else None
+    l = limit if isinstance(limit, int) else None
+    if p and l:
+        categories = await cursor.skip((p - 1) * l).limit(l).to_list(l)
+    else:
+        categories = await cursor.to_list(1000)
     for cat in categories:
         if isinstance(cat.get('created_at'), str):
             cat['created_at'] = datetime.fromisoformat(cat['created_at'])
@@ -264,9 +270,15 @@ async def delete_category(category_id: str, _: str = Depends(get_current_user)):
 
 # Menu Item routes
 @api_router.get("/menu-items", response_model=List[MenuItem])
-async def get_menu_items(category_id: Optional[str] = None):
+async def get_menu_items(category_id: Optional[str] = None, page: Optional[int] = Query(None, ge=1), limit: Optional[int] = Query(None, ge=1)):
     query = {"category_id": category_id} if category_id else {}
-    items = await db.menu_items.find(query, {"_id": 0}).to_list(1000)
+    cursor = db.menu_items.find(query, {"_id": 0})
+    p = page if isinstance(page, int) else None
+    l = limit if isinstance(limit, int) else None
+    if p and l:
+        items = await cursor.skip((p - 1) * l).limit(l).to_list(l)
+    else:
+        items = await cursor.to_list(1000)
     for item in items:
         if isinstance(item.get('created_at'), str):
             item['created_at'] = datetime.fromisoformat(item['created_at'])
@@ -472,8 +484,14 @@ async def verify_payment(verification: PaymentVerification):
         raise HTTPException(status_code=400, detail="Signature verification failed")
 
 @api_router.get("/orders", response_model=List[Order])
-async def get_orders(_: str = Depends(get_current_user)):
-    orders = await db.orders.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+async def get_orders(page: Optional[int] = Query(None, ge=1), limit: Optional[int] = Query(None, ge=1), _: str = Depends(get_current_user)):
+    cursor = db.orders.find({}, {"_id": 0}).sort("created_at", -1)
+    p = page if isinstance(page, int) else None
+    l = limit if isinstance(limit, int) else None
+    if p and l:
+        orders = await cursor.skip((p - 1) * l).limit(l).to_list(l)
+    else:
+        orders = await cursor.to_list(1000)
     for order in orders:
         if isinstance(order.get('created_at'), str):
             try:

@@ -204,13 +204,12 @@ export const Layout = ({ children }) => {
                 <MapPin className="h-4 w-4 text-primary" /> Visit Us
               </h4>
               <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-                B-17, Block-C, 40 Feet Road<br />
-                Badarpur Extn., New Delhi – 110044
+                Badarpur Border, New Delhi - 110044
               </p>
               <div className="flex items-center gap-2 text-sm text-foreground">
                 <Phone className="h-4 w-4 text-primary" />
                 <a href="tel:+919876543210" className="hover:text-primary transition-colors">
-                  +91 98765 43210
+                  +91 8527520048
                 </a>
               </div>
             </div>

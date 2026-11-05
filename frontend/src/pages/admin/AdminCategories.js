@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Pencil, Trash2, FolderPlus, AlertTriangle } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
+import Pagination from '../../components/Pagination';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -11,6 +12,7 @@ import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 const API = `${BACKEND_URL}/api`;
+const PAGE_SIZE = 8;
 
 const AdminCategories = () => {
   const { token } = useAuth();
@@ -19,6 +21,7 @@ const AdminCategories = () => {
   const [editingId, setEditingId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [formData, setFormData] = useState({ name: '', description: '', image_url: '', order: 0 });
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     fetchCategories();
@@ -77,6 +80,9 @@ const AdminCategories = () => {
       toast.error('Delete failed');
     }
   };
+
+  const totalPages = Math.ceil(categories.length / PAGE_SIZE) || 1;
+  const paginatedCategories = categories.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
     <AdminLayout>
@@ -183,7 +189,7 @@ const AdminCategories = () => {
 
         {/* Categories List */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {categories.map((cat) => (
+          {paginatedCategories.map((cat) => (
             <div
               key={cat.id}
               className="bg-card border border-border/80 rounded-xl p-5 flex items-center justify-between gap-4 hover:border-border transition-colors shadow-sm"
@@ -227,6 +233,21 @@ const AdminCategories = () => {
             </div>
           ))}
         </div>
+
+        {categories.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={categories.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={(p) => {
+              setCurrentPage(p);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            itemLabel="categories"
+            className="pt-4 border-t border-border/60"
+          />
+        )}
       </div>
     </AdminLayout>
   );

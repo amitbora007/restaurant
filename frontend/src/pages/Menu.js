@@ -3,6 +3,7 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Plus, Minus, X, Sparkles, AlertCircle } from 'lucide-react';
 import Layout from '../components/Layout';
+import Pagination from '../components/Pagination';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { useCart } from '../App';
@@ -10,6 +11,7 @@ import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 const API = `${BACKEND_URL}/api`;
+const PAGE_SIZE = 9;
 
 const Menu = () => {
   const [categories, setCategories] = useState([]);
@@ -18,10 +20,16 @@ const Menu = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [dietFilter, setDietFilter] = useState('all'); // 'all', 'veg', 'non-veg'
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Reset to page 1 whenever filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, searchQuery, dietFilter]);
 
   const fetchData = async () => {
     try {
@@ -65,6 +73,20 @@ const Menu = () => {
       return true;
     });
   }, [menuItems, selectedCategory, searchQuery, dietFilter]);
+
+  const totalPages = Math.ceil(filteredItems.length / PAGE_SIZE) || 1;
+  const paginatedItems = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredItems.slice(start, start + PAGE_SIZE);
+  }, [filteredItems, currentPage]);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    const rail = document.getElementById('menu-category-rail');
+    if (rail) {
+      rail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   if (loading) {
     return (
@@ -160,7 +182,7 @@ const Menu = () => {
         </div>
 
         {/* Horizontally Scrollable Sticky Category Rail */}
-        <div className="sticky top-20 z-30 bg-background/95 backdrop-blur-md py-3 -mx-4 px-4 sm:mx-0 sm:px-0 border-b border-border/60 mb-10">
+        <div id="menu-category-rail" className="sticky top-20 z-30 bg-background/95 backdrop-blur-md py-3 -mx-4 px-4 sm:mx-0 sm:px-0 border-b border-border/60 mb-10">
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
             <button
               onClick={() => setSelectedCategory('all')}
@@ -192,10 +214,22 @@ const Menu = () => {
 
         {/* Menu Items Grid */}
         {filteredItems.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            {filteredItems.map((item, index) => (
-              <MenuItemCard key={item.id} item={item} index={index} />
-            ))}
+          <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              {paginatedItems.map((item, index) => (
+                <MenuItemCard key={item.id} item={item} index={index} />
+              ))}
+            </div>
+
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredItems.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={handlePageChange}
+              itemLabel="dishes"
+              className="mt-12 pt-6 border-t border-border/60"
+            />
           </div>
         ) : (
           <div className="text-center py-20 bg-card/40 border border-border/60 rounded-xl p-8">

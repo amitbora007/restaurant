@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { RefreshCw, Clock, MapPin, Phone, Mail, CheckCircle, AlertCircle, UtensilsCrossed, Truck } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
+import Pagination from '../../components/Pagination';
 import { Button } from '../../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { useAuth } from '../../App';
@@ -9,6 +10,7 @@ import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 const API = `${BACKEND_URL}/api`;
+const PAGE_SIZE = 8;
 
 const AdminOrders = () => {
   const { token } = useAuth();
@@ -16,6 +18,12 @@ const AdminOrders = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // 'all', 'active', 'completed', 'cancelled'
   const [updatingId, setUpdatingId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Reset to page 1 on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter]);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -62,6 +70,9 @@ const AdminOrders = () => {
     if (filter === 'cancelled') return o.status === 'cancelled';
     return true;
   });
+
+  const totalPages = Math.ceil(filteredOrders.length / PAGE_SIZE) || 1;
+  const paginatedOrders = filteredOrders.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
     <AdminLayout>
@@ -111,7 +122,7 @@ const AdminOrders = () => {
 
         {/* Order Cards List */}
         <div className="space-y-4">
-          {filteredOrders.map((order) => (
+          {paginatedOrders.map((order) => (
             <div
               key={order.id}
               className="bg-card border border-border/80 rounded-xl p-5 sm:p-6 transition-colors shadow-sm hover:border-border"
@@ -223,6 +234,21 @@ const AdminOrders = () => {
               </div>
             </div>
           ))}
+
+          {filteredOrders.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredOrders.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={(p) => {
+                setCurrentPage(p);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              itemLabel="orders"
+              className="pt-4 border-t border-border/60"
+            />
+          )}
 
           {filteredOrders.length === 0 && !loading && (
             <div className="text-center py-16 bg-card border border-border/80 rounded-xl">

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Pencil, Trash2, Utensils, AlertTriangle, Upload, Search } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
+import Pagination from '../../components/Pagination';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
@@ -12,6 +13,7 @@ import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 const API = `${BACKEND_URL}/api`;
+const PAGE_SIZE = 10;
 
 const AdminMenuItems = () => {
   const { token } = useAuth();
@@ -22,6 +24,12 @@ const AdminMenuItems = () => {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Reset to page 1 when searching
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -135,6 +143,9 @@ const AdminMenuItems = () => {
   const filteredItems = items.filter((item) =>
     item.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const totalPages = Math.ceil(filteredItems.length / PAGE_SIZE) || 1;
+  const paginatedItems = filteredItems.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
     <AdminLayout>
@@ -313,7 +324,7 @@ const AdminMenuItems = () => {
 
         {/* Menu Items List */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredItems.map((item) => (
+          {paginatedItems.map((item) => (
             <div
               key={item.id}
               className="bg-card border border-border/80 rounded-xl p-4 sm:p-5 flex gap-4 items-center justify-between hover:border-border transition-colors shadow-sm"
@@ -373,6 +384,21 @@ const AdminMenuItems = () => {
             </div>
           ))}
         </div>
+
+        {filteredItems.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredItems.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={(p) => {
+              setCurrentPage(p);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            itemLabel="menu items"
+            className="pt-4 border-t border-border/60"
+          />
+        )}
       </div>
     </AdminLayout>
   );
