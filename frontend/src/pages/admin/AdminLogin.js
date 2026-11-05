@@ -55,7 +55,7 @@ const AdminLogin = () => {
     <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-background text-foreground relative">
       <Link
         to="/"
-        className="absolute top-6 left-6 inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors"
+        className="absolute top-6 left-6 inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors py-2 px-3 rounded-md hover:bg-secondary/60 touch-manipulation min-h-[44px]"
       >
         <ArrowLeft className="h-4 w-4" /> Back to Dining Front
       </Link>
@@ -67,14 +67,14 @@ const AdminLogin = () => {
         transition={{ duration: 0.5 }}
       >
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-card border border-primary/30 flex items-center justify-center text-primary mx-auto mb-4 shadow-sm">
-            <ShieldCheck className="h-6 w-6" />
+          <div className="inline-flex items-center justify-center gap-2.5 mb-2">
+            <ShieldCheck className="h-7 w-7 text-primary flex-shrink-0" />
+            <h1 className="text-3xl sm:text-4xl font-serif font-bold text-foreground tracking-tight" data-testid="admin-login-heading">
+              Food Hub
+            </h1>
           </div>
-          <h1 className="text-3xl font-serif font-bold text-foreground mb-1" data-testid="admin-login-heading">
-            Food Hub
-          </h1>
           <p className="text-xs uppercase tracking-widest text-primary font-medium">
-            Management Portal
+            Management & Dispatch Portal
           </p>
         </div>
 
