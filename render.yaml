@@ -1,4 +1,4 @@
-# Render Blueprint Specification for The Flavour Junction
+# Render Blueprint Specification for Food Hub
 # Documentation: https://render.com/docs/blueprint-spec
 
 services:
@@ -30,7 +30,7 @@ services:
       - key: RAZORPAY_KEY_SECRET
         sync: false
       - key: CORS_ORIGINS
-        value: http://localhost:3000
+        value: "*"
 
   # ---------------------------------------------------------------------------
   # 2. React Frontend Single Page Application (Static Site)
@@ -38,8 +38,6 @@ services:
   - type: web
     name: tfj-frontend
     runtime: static
-    region: oregon
-    plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: ./build
@@ -54,4 +52,4 @@ services:
         fromService:
           type: web
           name: fh-backend
-          property: url
+          envVarKey: RENDER_EXTERNAL_URL
