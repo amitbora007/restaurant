@@ -95,3 +95,17 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
+
+/* Razorpay iframe transparency and modal backdrop for dark mode theme */
+.razorpay-container,
+.razorpay-container *,
+iframe.razorpay-checkout-frame,
+iframe[src*="razorpay"] {
+    color-scheme: light !important;
+}
+
+.razorpay-container {
+    background-color: rgba(0, 0, 0, 0.75) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+}

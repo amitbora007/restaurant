@@ -40,8 +40,8 @@ Real-time cart synchronization with itemized cost calculation, automatic 5% rest
 
 ---
 
-### 4. Checkout & Order Fulfillment
-Three distinct fulfillment modes: **Home Delivery** (with full address), **Dine-In** (with Table Number), and **Takeaway**, backed by Razorpay secure payment processing.
+### 4. In-Page Checkout Modal & Slide-Over Drawer
+Seamless order completion directly on the cart page without route jumping or context loss. Features three distinct fulfillment modes: **Home Delivery** (with full address and automated delivery fee waiver over ₹500), **Dine-In** (with Table Number), and **Takeaway**, backed by Razorpay secure payment processing and instant kitchen dispatch.
 
 ![Food Hub Checkout Flow](docs/screenshots/03_cart_checkout.png)
 
@@ -99,6 +99,7 @@ Use the pre-configured administrator account to access the operations suite imme
 
 ### 🍷 Customer Dining Experience
 - **Luxury Dark Aesthetic**: Handcrafted dark slate background (`#0c0a09`) with warm amber gold highlights (`#f59e0b` / `#d97706`).
+- **In-Page Checkout Drawer**: Zero context loss checkout modal over the shopping bag, eliminating full-page route jumps.
 - **Half & Full Portion Steppers**: Diners can choose between portion sizes per dish, with individual pricing and cart item grouping.
 - **Dietary Filter Badges**: Quick visual indicators and filter chips for Pure Vegetarian and Non-Vegetarian selections.
 - **Fulfillment Flexibility**:

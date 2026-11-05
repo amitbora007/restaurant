@@ -145,7 +145,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/menu" element={<Menu />} />
               <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/checkout" element={<Navigate to="/cart?checkout=true" replace />} />
               <Route path="/order-success/:orderId" element={<OrderSuccess />} />
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route

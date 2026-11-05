@@ -1,14 +1,32 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Minus, Plus, Trash2, ArrowRight, ShoppingBag, ShieldCheck, Truck } from 'lucide-react';
 import Layout from '../components/Layout';
 import { Button } from '../components/ui/button';
+import CheckoutModal from '../components/CheckoutModal';
 import { useCart } from '../App';
 
 const Cart = () => {
   const { cartItems, updateQuantity, removeFromCart, getTotalAmount } = useCart();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('checkout') === 'true' && cartItems.length > 0) {
+      setIsCheckoutOpen(true);
+    }
+  }, [searchParams, cartItems.length]);
+
+  const handleCheckoutModalChange = (open) => {
+    setIsCheckoutOpen(open);
+    if (!open && searchParams.get('checkout') === 'true') {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('checkout');
+      setSearchParams(newParams, { replace: true });
+    }
+  };
 
   const subtotal = getTotalAmount();
   const gst = Number((subtotal * 0.05).toFixed(2));
@@ -200,7 +218,7 @@ const Cart = () => {
 
             <Button
               size="lg"
-              onClick={() => navigate('/checkout')}
+              onClick={() => setIsCheckoutOpen(true)}
               className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-6 text-base font-medium tracking-wide shadow-md active:scale-95 transition-transform"
               data-testid="proceed-checkout-btn"
             >
@@ -215,6 +233,11 @@ const Cart = () => {
           </div>
         </div>
       </div>
+
+      <CheckoutModal
+        open={isCheckoutOpen}
+        onOpenChange={handleCheckoutModalChange}
+      />
     </Layout>
   );
 };
