@@ -6,7 +6,7 @@ services:
   # 1. FastAPI Backend Web Service
   # ---------------------------------------------------------------------------
   - type: web
-    name: fh-backend
+    name: foodhub-backend
     runtime: python
     region: oregon
     plan: free
@@ -36,7 +36,7 @@ services:
   # 2. React Frontend Single Page Application (Static Site)
   # ---------------------------------------------------------------------------
   - type: web
-    name: tfj-frontend
+    name: foodhub-frontend
     runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build
@@ -51,5 +51,5 @@ services:
       - key: REACT_APP_BACKEND_URL
         fromService:
           type: web
-          name: fh-backend
+          name: foodhub-backend
           envVarKey: RENDER_EXTERNAL_URL
