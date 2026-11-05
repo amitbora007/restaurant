@@ -201,7 +201,7 @@ async def register(user: UserCreate):
     existing_user = await db.users.find_one({"email": user.email}, {"_id": 0})
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    
+
     hashed_password = get_password_hash(user.password)
     user_doc = {
         "id": str(uuid.uuid4()),
@@ -211,7 +211,7 @@ async def register(user: UserCreate):
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     await db.users.insert_one(user_doc)
-    
+
     access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -220,7 +220,7 @@ async def login(user: UserLogin):
     db_user = await db.users.find_one({"email": user.email}, {"_id": 0})
     if not db_user or not verify_password(user.password, db_user["hashed_password"]):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
-    
+
     access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -255,7 +255,7 @@ async def update_category(category_id: str, category: CategoryCreate, _: str = D
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Category not found")
-    
+
     updated = await db.categories.find_one({"id": category_id}, {"_id": 0})
     if isinstance(updated.get('created_at'), str):
         updated['created_at'] = datetime.fromisoformat(updated['created_at'])
@@ -300,7 +300,7 @@ async def update_menu_item(item_id: str, item: MenuItemCreate, _: str = Depends(
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Menu item not found")
-    
+
     updated = await db.menu_items.find_one({"id": item_id}, {"_id": 0})
     if isinstance(updated.get('created_at'), str):
         updated['created_at'] = datetime.fromisoformat(updated['created_at'])
@@ -317,11 +317,11 @@ async def delete_menu_item(item_id: str, _: str = Depends(get_current_user)):
 async def upload_image(file: UploadFile = File(...), _: str = Depends(get_current_user)):
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Only image files are allowed")
-    
+
     contents = await file.read()
     if len(contents) > 5 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="Image size exceeds maximum limit of 5MB")
-        
+
     base64_encoded = base64.b64encode(contents).decode('utf-8')
     image_url = f"data:{file.content_type};base64,{base64_encoded}"
     return {"url": image_url}
@@ -331,34 +331,34 @@ async def upload_image(file: UploadFile = File(...), _: str = Depends(get_curren
 async def create_order(order: OrderCreate):
     if not order.items:
         raise HTTPException(status_code=400, detail="Cart cannot be empty")
-        
+
     # Security: Fetch items from DB to recalculate verified prices (Prevent price tampering)
     item_ids = [item.menu_item_id for item in order.items]
     db_items = await db.menu_items.find({"id": {"$in": item_ids}}, {"_id": 0}).to_list(100)
     db_items_map = {item["id"]: item for item in db_items}
-    
+
     verified_items: List[CartItem] = []
     subtotal = 0.0
-    
+
     for item in order.items:
         db_item = db_items_map.get(item.menu_item_id)
         if not db_item:
             raise HTTPException(status_code=400, detail=f"Item '{item.name}' is no longer available in the menu")
-            
+
         if not db_item.get("is_available", True):
             raise HTTPException(status_code=400, detail=f"Item '{db_item.get('name')}' is currently sold out")
-            
+
         quantity = max(1, min(int(item.quantity), 50))
-        
+
         # Verify legitimate price by size
         if item.size == 'half':
             unit_price = db_item.get('price_half') or db_item.get('price_full')
         else:
             unit_price = db_item.get('price_full') or db_item.get('price_half')
-            
+
         if unit_price is None or unit_price <= 0:
             raise HTTPException(status_code=400, detail=f"Price not available for {db_item.get('name')} ({item.size})")
-            
+
         verified_item = CartItem(
             menu_item_id=db_item["id"],
             name=db_item["name"],
@@ -369,19 +369,19 @@ async def create_order(order: OrderCreate):
         )
         verified_items.append(verified_item)
         subtotal += float(unit_price) * quantity
-        
+
     subtotal = round(subtotal, 2)
     # GST calculation (5% standard restaurant tax in India)
     gst_amount = round(subtotal * 0.05, 2)
-    
+
     # Delivery fee: ₹40 for delivery if under ₹500, free for ₹500+ or takeaway/dine_in
     if order.fulfillment_type == "delivery" and subtotal < 500:
         delivery_fee = 40.0
     else:
         delivery_fee = 0.0
-        
+
     total_amount = round(subtotal + gst_amount + delivery_fee, 2)
-    
+
     order_id = str(uuid.uuid4())
     doc = {
         "id": order_id,
@@ -402,7 +402,7 @@ async def create_order(order: OrderCreate):
         "razorpay_payment_id": None,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
-    
+
     if razorpay_key_id and razorpay_key_id != 'rzp_test_dummy' and not razorpay_key_id.startswith('dummy'):
         try:
             razorpay_order = razorpay_client.order.create({
@@ -418,7 +418,7 @@ async def create_order(order: OrderCreate):
         logger.info("Demo mode: Order placed without Razorpay payment gateway")
         doc['razorpay_order_id'] = None
         doc['status'] = 'paid'
-        
+
     await db.orders.insert_one(doc)
     doc['created_at'] = datetime.fromisoformat(doc['created_at'])
     return Order(**doc)
@@ -442,7 +442,7 @@ async def update_order_status(order_id: str, payload: OrderStatusUpdate, _: str 
     valid_statuses = {"pending", "paid", "preparing", "out_for_delivery", "completed", "cancelled"}
     if payload.status not in valid_statuses:
         raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of {valid_statuses}")
-        
+
     result = await db.orders.update_one(
         {"id": order_id},
         {"$set": {"status": payload.status}}
@@ -458,17 +458,17 @@ async def verify_payment(verification: PaymentVerification):
         db_order = await db.orders.find_one({"id": verification.order_id}, {"_id": 0})
         if not db_order:
             raise HTTPException(status_code=404, detail="Order not found")
-            
+
         if db_order.get("razorpay_order_id") != verification.razorpay_order_id:
             raise HTTPException(status_code=400, detail="Razorpay order ID mismatch")
-            
+
         params_dict = {
             'razorpay_order_id': verification.razorpay_order_id,
             'razorpay_payment_id': verification.razorpay_payment_id,
             'razorpay_signature': verification.razorpay_signature
         }
         razorpay_client.utility.verify_payment_signature(params_dict)
-        
+
         await db.orders.update_one(
             {"id": verification.order_id},
             {"$set": {
@@ -522,6 +522,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
     allow_origins=origins,
+    allow_origin_regex=r"https://.*\.onrender\.com",
     allow_methods=["*"],
     allow_headers=["*"],
 )
