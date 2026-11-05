@@ -54,14 +54,14 @@ export const useCart = () => {
 };
 
 const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([]);
-
-  useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      setCartItems(JSON.parse(savedCart));
+  const [cartItems, setCartItems] = useState(() => {
+    try {
+      const savedCart = localStorage.getItem('cart');
+      return savedCart ? JSON.parse(savedCart) : [];
+    } catch (e) {
+      return [];
     }
-  }, []);
+  });
 
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cartItems));
