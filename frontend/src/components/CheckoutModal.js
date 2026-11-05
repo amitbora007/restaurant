@@ -426,7 +426,7 @@ export const CheckoutModal = ({ open, onOpenChange }) => {
                     <span>Delivery Partner Fee</span>
                     <span className="text-foreground font-medium">
                       {deliveryFee === 0 ? (
-                        <span className="text-emerald-400 font-semibold uppercase text-[10px] tracking-wider">
+                        <span className="text-emerald-400 font-semibold uppercase text-[11px] tracking-wider">
                           Complimentary
                         </span>
                       ) : (

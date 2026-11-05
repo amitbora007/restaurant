@@ -137,18 +137,18 @@ const Cart = () => {
                   </div>
 
                   {/* Quantity Stepper */}
-                  <div className="inline-flex items-center bg-secondary/80 border border-border/80 rounded-md overflow-hidden">
+                  <div className="inline-flex items-center bg-secondary/80 border border-border/80 rounded-lg overflow-hidden shadow-sm">
                     <button
                       type="button"
                       onClick={() => updateQuantity(item.menu_item_id, item.size, item.quantity - 1)}
-                      className="w-7 h-7 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                      className="w-11 h-11 sm:w-8 sm:h-8 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary active:scale-95 transition-all touch-manipulation focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
                       aria-label="Decrease quantity"
                       data-testid={`decrease-qty-btn-${item.menu_item_id}`}
                     >
-                      <Minus className="h-3 w-3" />
+                      <Minus className="h-3.5 w-3.5" />
                     </button>
                     <span
-                      className="w-7 text-center text-xs font-bold text-foreground"
+                      className="w-9 sm:w-8 text-center text-xs sm:text-sm font-bold text-foreground select-none"
                       data-testid={`item-quantity-${item.menu_item_id}`}
                     >
                       {item.quantity}
@@ -156,11 +156,11 @@ const Cart = () => {
                     <button
                       type="button"
                       onClick={() => updateQuantity(item.menu_item_id, item.size, item.quantity + 1)}
-                      className="w-7 h-7 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                      className="w-11 h-11 sm:w-8 sm:h-8 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary active:scale-95 transition-all touch-manipulation focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
                       aria-label="Increase quantity"
                       data-testid={`increase-qty-btn-${item.menu_item_id}`}
                     >
-                      <Plus className="h-3 w-3" />
+                      <Plus className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
@@ -173,7 +173,7 @@ const Cart = () => {
                   <button
                     type="button"
                     onClick={() => removeFromCart(item.menu_item_id, item.size)}
-                    className="text-muted-foreground/60 hover:text-destructive p-1 rounded transition-colors"
+                    className="text-muted-foreground/60 hover:text-destructive p-2.5 sm:p-1.5 rounded-lg hover:bg-destructive/10 transition-colors touch-manipulation min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
                     aria-label={`Remove ${item.name} from bag`}
                     data-testid={`remove-item-btn-${item.menu_item_id}`}
                   >

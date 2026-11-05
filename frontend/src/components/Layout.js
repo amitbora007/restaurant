@@ -45,7 +45,7 @@ export const Layout = ({ children }) => {
               <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors font-serif block leading-none">
                 Food Hub
               </span>
-              <span className="text-[10px] tracking-[0.2em] text-primary uppercase font-sans font-medium">
+              <span className="text-[11px] tracking-[0.2em] text-primary uppercase font-sans font-medium">
                 Artisanal Cuisine
               </span>
             </div>
@@ -103,7 +103,7 @@ export const Layout = ({ children }) => {
                 <ShoppingCart className="h-5 w-5" />
                 {cartCount > 0 && (
                   <span
-                    className="absolute top-1 right-1 bg-primary text-primary-foreground rounded-full w-4 h-4 text-[10px] flex items-center justify-center font-bold"
+                    className="absolute top-1 right-1 bg-primary text-primary-foreground rounded-full w-4 h-4 text-[11px] leading-none flex items-center justify-center font-bold"
                   >
                     {cartCount}
                   </span>
@@ -175,7 +175,7 @@ export const Layout = ({ children }) => {
                 Curating culinary excellence across Indian, Chinese, and Continental traditions. Prepared with authentic spices, premium ingredients, and unmatched passion.
               </p>
               <div className="flex items-center gap-2 text-xs text-primary font-medium tracking-wide">
-                <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
                 Kitchen Open for Dine-in & Delivery
               </div>
             </div>
@@ -242,7 +242,7 @@ export const Layout = ({ children }) => {
           {/* Bottom Copyright */}
           <div className="pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
             <p>&copy; {new Date().getFullYear()} Food Hub. All rights reserved.</p>
-            <p className="text-muted-foreground/70">
+            <p className="text-muted-foreground">
               Designed with timeless craftsmanship & modern culinary intelligence.
             </p>
           </div>

@@ -182,11 +182,11 @@ const Menu = () => {
         </div>
 
         {/* Horizontally Scrollable Sticky Category Rail */}
-        <div id="menu-category-rail" className="sticky top-20 z-30 bg-background/95 backdrop-blur-md py-3 -mx-4 px-4 sm:mx-0 sm:px-0 border-b border-border/60 mb-10">
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+        <div id="menu-category-rail" className="sticky top-20 z-30 bg-background/95 backdrop-blur-md py-3 -mx-4 px-4 sm:mx-0 sm:px-0 border-b border-border/60 mb-10 relative">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 pr-8 sm:pr-0 scroll-smooth">
             <button
               onClick={() => setSelectedCategory('all')}
-              className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+              className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 touch-manipulation ${
                 selectedCategory === 'all'
                   ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20 font-semibold'
                   : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:border-primary/50'
@@ -199,7 +199,7 @@ const Menu = () => {
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+                className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 touch-manipulation ${
                   selectedCategory === cat.id
                     ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20 font-semibold'
                     : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:border-primary/50'
@@ -210,6 +210,8 @@ const Menu = () => {
               </button>
             ))}
           </div>
+          {/* Subtle edge fade gradient to hint horizontal scrollability on touch screens */}
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent sm:hidden" aria-hidden="true" />
         </div>
 
         {/* Menu Items Grid */}
@@ -234,9 +236,9 @@ const Menu = () => {
         ) : (
           <div className="text-center py-20 bg-card/40 border border-border/60 rounded-xl p-8">
             <AlertCircle className="h-10 w-10 text-muted-foreground/60 mx-auto mb-3" />
-            <h3 className="text-lg font-serif font-bold text-foreground mb-1">
+            <h2 className="text-lg font-serif font-bold text-foreground mb-1">
               No dishes found
-            </h3>
+            </h2>
             <p className="text-muted-foreground text-sm max-w-md mx-auto mb-6">
               We couldn't find any dishes matching "{searchQuery}". Try searching for another ingredient or reset the category filters.
             </p>
@@ -351,9 +353,9 @@ const MenuItemCard = ({ item, index }) => {
         {/* Content details */}
         <div className="p-5">
           <div className="flex justify-between items-start gap-2 mb-2">
-            <h3 className="text-lg font-serif font-bold text-foreground group-hover:text-primary transition-colors leading-snug">
+            <h2 className="text-lg font-serif font-bold text-foreground group-hover:text-primary transition-colors leading-snug">
               {item.name}
-            </h3>
+            </h2>
           </div>
           <p className="text-muted-foreground text-xs leading-relaxed line-clamp-2 mb-4">
             {item.description || 'Artisanal recipe prepared with authentic spices and freshest ingredients.'}
