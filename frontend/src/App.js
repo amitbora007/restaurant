@@ -1,16 +1,17 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from '@/components/ui/sonner';
-import Home from '@/pages/Home';
-import Menu from '@/pages/Menu';
-import Cart from '@/pages/Cart';
-import Checkout from '@/pages/Checkout';
-import AdminLogin from '@/pages/admin/AdminLogin';
-import AdminDashboard from '@/pages/admin/AdminDashboard';
-import AdminCategories from '@/pages/admin/AdminCategories';
-import AdminMenuItems from '@/pages/admin/AdminMenuItems';
-import AdminOrders from '@/pages/admin/AdminOrders';
-import '@/App.css';
+import { Toaster } from './components/ui/sonner';
+import Home from './pages/Home';
+import Menu from './pages/Menu';
+import Cart from './pages/Cart';
+import Checkout from './pages/Checkout';
+import OrderSuccess from './pages/OrderSuccess';
+import AdminLogin from './pages/admin/AdminLogin';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminCategories from './pages/admin/AdminCategories';
+import AdminMenuItems from './pages/admin/AdminMenuItems';
+import AdminOrders from './pages/admin/AdminOrders';
+import './App.css';
 
 const AuthContext = createContext();
 
@@ -145,6 +146,7 @@ function App() {
               <Route path="/menu" element={<Menu />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/order-success/:orderId" element={<OrderSuccess />} />
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route
                 path="/admin"

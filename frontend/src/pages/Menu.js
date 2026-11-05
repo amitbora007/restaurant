@@ -1,21 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { motion } from 'framer-motion';
-import { Plus } from 'lucide-react';
-import Layout from '@/components/Layout';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { useCart } from '@/App';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, Plus, Minus, X, Sparkles, AlertCircle } from 'lucide-react';
+import Layout from '../components/Layout';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { useCart } from '../App';
 import { toast } from 'sonner';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 const API = `${BACKEND_URL}/api`;
 
 const Menu = () => {
@@ -23,7 +16,8 @@ const Menu = () => {
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const { addToCart, removeFromCart } = useCart();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [dietFilter, setDietFilter] = useState('all'); // 'all', 'veg', 'non-veg'
 
   useEffect(() => {
     fetchData();
@@ -35,42 +29,51 @@ const Menu = () => {
         axios.get(`${API}/categories`),
         axios.get(`${API}/menu-items`),
       ]);
-      setCategories(categoriesRes.data);
-      setMenuItems(itemsRes.data);
+      setCategories(categoriesRes.data || []);
+      setMenuItems(itemsRes.data || []);
     } catch (error) {
-      console.error('Error fetching data:', error);
-      toast.error('Failed to load menu');
+      console.error('Error fetching menu data:', error);
+      toast.error('Unable to connect to menu service. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddToCart = (item, size) => {
-    const price = size === 'half' ? item.price_half : item.price_full;
-    if (!price) {
-      toast.error('This size is not available');
-      return;
-    }
-    addToCart({
-      menu_item_id: item.id,
-      name: item.name,
-      price,
-      size,
-      image_url: item.image_url,
-    });
-    toast.success(`${item.name} (${size}) added to cart`);
-  };
+  // Filter items by category, search query, and dietary preference
+  const filteredItems = useMemo(() => {
+    return menuItems.filter((item) => {
+      // Category match
+      if (selectedCategory !== 'all' && item.category_id !== selectedCategory) {
+        return false;
+      }
+      // Search match
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const matchesName = item.name.toLowerCase().includes(query);
+        const matchesDesc = item.description?.toLowerCase().includes(query);
+        if (!matchesName && !matchesDesc) return false;
+      }
+      // Diet filter (Heuristic based on name/category)
+      const isVeg = !item.name.toLowerCase().includes('chicken') &&
+                    !item.name.toLowerCase().includes('egg') &&
+                    !item.name.toLowerCase().includes('fish') &&
+                    !item.name.toLowerCase().includes('mutton') &&
+                    !item.name.toLowerCase().includes('meat');
+      if (dietFilter === 'veg' && !isVeg) return false;
+      if (dietFilter === 'non-veg' && isVeg) return false;
 
-  const filteredItems =
-    selectedCategory === 'all'
-      ? menuItems
-      : menuItems.filter((item) => item.category_id === selectedCategory);
+      return true;
+    });
+  }, [menuItems, selectedCategory, searchQuery, dietFilter]);
 
   if (loading) {
     return (
       <Layout>
-        <div className="min-h-screen flex items-center justify-center">
-          <p className="text-muted-foreground">Loading menu...</p>
+        <div className="min-h-[70vh] flex flex-col items-center justify-center gap-4">
+          <div className="w-12 h-12 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          <p className="text-muted-foreground text-sm font-medium tracking-wide">
+            Curating artisanal menu items...
+          </p>
         </div>
       </Layout>
     );
@@ -78,59 +81,142 @@ const Menu = () => {
 
   return (
     <Layout>
-      <div className="py-24 max-w-7xl mx-auto px-6 md:px-12">
+      <div className="py-12 md:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
+        {/* Header Section */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          transition={{ duration: 0.5 }}
+          className="text-center mb-10"
         >
-          <h1 className="text-5xl md:text-6xl font-bold mb-6" data-testid="menu-page-heading">
-            Our Menu
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-medium uppercase tracking-wider mb-4">
+            <Sparkles className="h-3 w-3" /> Master Crafted Recipes
+          </div>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif font-bold tracking-tight mb-4" data-testid="menu-page-heading">
+            Our Culinary Repertoire
           </h1>
-          <p className="text-muted-foreground text-lg">
-            Explore our diverse selection of dishes
+          <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto">
+            Explore 16 specialized categories crafted by dedicated culinary masters. Freshly prepared to order.
           </p>
         </motion.div>
 
-        <div className="mb-12">
-          <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-            <TabsList className="w-full justify-start flex-wrap h-auto gap-2 bg-transparent">
-              <TabsTrigger
-                value="all"
-                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                data-testid="category-tab-all"
+        {/* Search & Dietary Controls */}
+        <div className="mb-8 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+          {/* Search Input */}
+          <div className="relative md:col-span-8">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search momos, dosas, curries, pastas, beverages..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10 py-5 bg-card border-border/80 focus:border-primary text-sm rounded-md"
+              data-testid="menu-search-input"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Clear search"
               >
-                All
-              </TabsTrigger>
-              {categories.map((cat) => (
-                <TabsTrigger
-                  key={cat.id}
-                  value={cat.id}
-                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
-                  data-testid={`category-tab-${cat.name.toLowerCase().replace(/\s+/g, '-')}`}
-                >
-                  {cat.name}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Diet Filter Buttons */}
+          <div className="md:col-span-4 flex items-center justify-end gap-2 bg-card border border-border/80 p-1 rounded-md">
+            <button
+              onClick={() => setDietFilter('all')}
+              className={`flex-1 py-1.5 px-3 rounded text-xs font-medium transition-all ${
+                dietFilter === 'all'
+                  ? 'bg-secondary text-foreground font-semibold shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              All Items
+            </button>
+            <button
+              onClick={() => setDietFilter('veg')}
+              className={`flex-1 py-1.5 px-3 rounded text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
+                dietFilter === 'veg'
+                  ? 'bg-emerald-950/70 border border-emerald-600/50 text-emerald-400 font-semibold'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span> Veg
+            </button>
+            <button
+              onClick={() => setDietFilter('non-veg')}
+              className={`flex-1 py-1.5 px-3 rounded text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
+                dietFilter === 'non-veg'
+                  ? 'bg-red-950/70 border border-red-600/50 text-red-400 font-semibold'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-red-500"></span> Non-Veg
+            </button>
+          </div>
         </div>
 
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          {filteredItems.map((item, index) => (
-            <MenuItemCard key={item.id} item={item} onAddToCart={handleAddToCart} removeFromCart={removeFromCart} index={index} />
-          ))}
-        </motion.div>
+        {/* Horizontally Scrollable Sticky Category Rail */}
+        <div className="sticky top-20 z-30 bg-background/95 backdrop-blur-md py-3 -mx-4 px-4 sm:mx-0 sm:px-0 border-b border-border/60 mb-10">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+            <button
+              onClick={() => setSelectedCategory('all')}
+              className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+                selectedCategory === 'all'
+                  ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20 font-semibold'
+                  : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:border-primary/50'
+              }`}
+              data-testid="category-tab-all"
+            >
+              All Categories ({menuItems.length})
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap transition-all flex-shrink-0 ${
+                  selectedCategory === cat.id
+                    ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20 font-semibold'
+                    : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:border-primary/50'
+                }`}
+                data-testid={`category-tab-${cat.name.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        </div>
 
-        {filteredItems.length === 0 && (
-          <div className="text-center py-24">
-            <p className="text-muted-foreground text-lg">No items found in this category</p>
+        {/* Menu Items Grid */}
+        {filteredItems.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            {filteredItems.map((item, index) => (
+              <MenuItemCard key={item.id} item={item} index={index} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20 bg-card/40 border border-border/60 rounded-xl p-8">
+            <AlertCircle className="h-10 w-10 text-muted-foreground/60 mx-auto mb-3" />
+            <h3 className="text-lg font-serif font-bold text-foreground mb-1">
+              No dishes found
+            </h3>
+            <p className="text-muted-foreground text-sm max-w-md mx-auto mb-6">
+              We couldn't find any dishes matching "{searchQuery}". Try searching for another ingredient or reset the category filters.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedCategory('all');
+                setDietFilter('all');
+              }}
+            >
+              Reset Filters
+            </Button>
           </div>
         )}
       </div>
@@ -138,103 +224,185 @@ const Menu = () => {
   );
 };
 
-const MenuItemCard = ({ item, onAddToCart, removeFromCart, index }) => {
-  const { cartItems } = useCart();
-  const [selectedSize, setSelectedSize] = useState(
-    item.price_full && !item.price_half ? 'full' : 'half'
+// Polished Item Card with Segmented Half/Full portion and inline Stepper
+const MenuItemCard = ({ item, index }) => {
+  const { cartItems, addToCart, updateQuantity } = useCart();
+  const [imageError, setImageError] = useState(false);
+
+  const hasHalf = item.price_half !== null && item.price_half !== undefined && item.price_half > 0;
+  const hasFull = item.price_full !== null && item.price_full !== undefined && item.price_full > 0;
+
+  // Default portion to 'half' if available, otherwise 'full'
+  const [selectedSize, setSelectedSize] = useState(hasHalf ? 'half' : 'full');
+
+  const currentPrice = selectedSize === 'half' ? (item.price_half || item.price_full) : (item.price_full || item.price_half);
+
+  // Check if this exact item (id + selectedSize) is in cart
+  const cartItem = cartItems.find(
+    (ci) => ci.menu_item_id === item.id && ci.size === selectedSize
   );
+  const currentQuantity = cartItem ? cartItem.quantity : 0;
 
-  const hasHalf = item.price_half !== null && item.price_half !== undefined;
-  const hasFull = item.price_full !== null && item.price_full !== undefined;
+  const isVeg = !item.name.toLowerCase().includes('chicken') &&
+                !item.name.toLowerCase().includes('egg') &&
+                !item.name.toLowerCase().includes('fish') &&
+                !item.name.toLowerCase().includes('mutton') &&
+                !item.name.toLowerCase().includes('meat');
 
-  const itemCountInCart = cartItems
-    .filter((cartItem) => cartItem.menu_item_id === item.id)
-    .reduce((sum, cartItem) => sum + cartItem.quantity, 0);
+  const handleIncrement = () => {
+    if (currentQuantity === 0) {
+      addToCart({
+        menu_item_id: item.id,
+        name: item.name,
+        price: currentPrice,
+        size: selectedSize,
+        image_url: item.image_url,
+      });
+      toast.success(`${item.name} (${selectedSize}) added to bag`);
+    } else {
+      updateQuantity(item.id, selectedSize, currentQuantity + 1);
+    }
+  };
+
+  const handleDecrement = () => {
+    if (currentQuantity > 0) {
+      updateQuantity(item.id, selectedSize, currentQuantity - 1);
+    }
+  };
 
   return (
     <motion.div
-      className="bg-card border border-border hover:border-primary/50 transition-all duration-300 overflow-hidden group"
-      initial={{ opacity: 0, y: 30 }}
+      className="bg-card border border-border/80 rounded-lg overflow-hidden flex flex-col justify-between hover:border-primary/50 transition-all duration-300 group shadow-sm hover:shadow-lg hover:shadow-black/40"
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.05 }}
-      whileHover={{ scale: 1.02 }}
+      transition={{ duration: 0.4, delay: Math.min(index * 0.03, 0.3) }}
       data-testid={`menu-item-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
     >
-      {item.image_url && (
-        <div className="aspect-square overflow-hidden">
-          <img
-            src={item.image_url}
-            alt={item.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-        </div>
-      )}
-      <div className="p-6">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="text-xl font-bold flex-1">{item.name}</h3>
-          {itemCountInCart > 0 && (
+      <div>
+        {/* Card Image Header with Veg/Non-Veg Badge */}
+        <div className="relative aspect-[16/10] overflow-hidden bg-muted/40">
+          {item.image_url && !imageError ? (
+            <img
+              src={item.image_url}
+              alt={item.name}
+              onError={() => setImageError(true)}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-card text-muted-foreground/40 font-serif text-lg">
+              Food Hub
+            </div>
+          )}
+
+          {/* Veg / Non-Veg Indicator Badge */}
+          <div className="absolute top-3 left-3 bg-background/90 backdrop-blur-md p-1.5 rounded-sm border border-border/80 shadow">
             <span
-              className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold ml-2"
-              data-testid={`cart-count-${item.id}`}
-            >
-              {itemCountInCart}
-            </span>
+              className={`w-3 h-3 rounded-full block ${
+                isVeg ? 'bg-emerald-500' : 'bg-red-500'
+              }`}
+              title={isVeg ? 'Vegetarian' : 'Non-Vegetarian'}
+            />
+          </div>
+
+          {/* Total in cart badge for this dish (all sizes combined) */}
+          {cartItems.filter(ci => ci.menu_item_id === item.id).length > 0 && (
+            <div className="absolute top-3 right-3 bg-primary text-primary-foreground px-2 py-0.5 rounded-full text-xs font-bold shadow-md">
+              In Bag: {cartItems.filter(ci => ci.menu_item_id === item.id).reduce((s, i) => s + i.quantity, 0)}
+            </div>
           )}
         </div>
-        {item.description && (
-          <p className="text-muted-foreground text-sm mb-4">{item.description}</p>
-        )}
-        <div className="flex items-center justify-between mb-4">
+
+        {/* Content details */}
+        <div className="p-5">
+          <div className="flex justify-between items-start gap-2 mb-2">
+            <h3 className="text-lg font-serif font-bold text-foreground group-hover:text-primary transition-colors leading-snug">
+              {item.name}
+            </h3>
+          </div>
+          <p className="text-muted-foreground text-xs leading-relaxed line-clamp-2 mb-4">
+            {item.description || 'Artisanal recipe prepared with authentic spices and freshest ingredients.'}
+          </p>
+        </div>
+      </div>
+
+      {/* Pricing & Cart Action Area */}
+      <div className="p-5 pt-0">
+        <div className="pt-3 border-t border-border/60 flex items-center justify-between gap-2">
+          {/* Portion Selector (Half vs Full) */}
+          {hasHalf && hasFull ? (
+            <div className="inline-flex rounded-md bg-secondary/80 p-0.5 border border-border/60">
+              <button
+                type="button"
+                onClick={() => setSelectedSize('half')}
+                className={`px-2.5 py-1 text-xs font-medium rounded transition-all ${
+                  selectedSize === 'half'
+                    ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                data-testid={`size-half-${item.id}`}
+              >
+                Half: ₹{item.price_half}
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedSize('full')}
+                className={`px-2.5 py-1 text-xs font-medium rounded transition-all ${
+                  selectedSize === 'full'
+                    ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                data-testid={`size-full-${item.id}`}
+              >
+                Full: ₹{item.price_full}
+              </button>
+            </div>
+          ) : (
+            <div className="text-base font-bold text-primary font-serif">
+              ₹{currentPrice}
+            </div>
+          )}
+
+          {/* Stepper / Add button */}
           <div>
-            {hasHalf && hasFull ? (
-              <div className="flex gap-2">
-                <span className="text-primary font-semibold">Half: ₹{item.price_half}</span>
-                <span className="text-muted-foreground">|</span>
-                <span className="text-primary font-semibold">Full: ₹{item.price_full}</span>
+            {currentQuantity > 0 ? (
+              <div className="flex items-center bg-primary/10 border border-primary/40 rounded-md overflow-hidden">
+                <button
+                  type="button"
+                  onClick={handleDecrement}
+                  className="w-8 h-8 flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+                  aria-label="Decrease quantity"
+                  data-testid={`decrease-item-${item.id}`}
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                </button>
+                <span
+                  className="w-8 text-center text-xs font-bold text-primary"
+                  data-testid={`qty-item-${item.id}`}
+                >
+                  {currentQuantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleIncrement}
+                  className="w-8 h-8 flex items-center justify-center text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+                  aria-label="Increase quantity"
+                  data-testid={`increase-item-${item.id}`}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
               </div>
-            ) : hasHalf ? (
-              <span className="text-primary font-semibold text-lg">₹{item.price_half}</span>
             ) : (
-              <span className="text-primary font-semibold text-lg">₹{item.price_full}</span>
+              <Button
+                size="sm"
+                onClick={handleIncrement}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium px-4 gap-1.5 shadow-sm active:scale-95 transition-transform"
+                data-testid={`add-to-cart-btn-${item.id}`}
+              >
+                <Plus className="h-3.5 w-3.5" /> Add
+              </Button>
             )}
           </div>
-        </div>
-        <div className="space-y-2">
-          <div className="flex gap-2">
-            {hasHalf && hasFull && (
-              <Select value={selectedSize} onValueChange={setSelectedSize}>
-                <SelectTrigger className="w-24" data-testid={`size-select-${item.id}`}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="half">Half</SelectItem>
-                  <SelectItem value="full">Full</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-            <Button
-              onClick={() => onAddToCart(item, selectedSize)}
-              className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300"
-              data-testid={`add-to-cart-btn-${item.id}`}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add to Cart
-            </Button>
-          </div>
-          {itemCountInCart > 0 && (
-            <Button
-              onClick={() => {
-                const itemsToRemove = cartItems.filter(ci => ci.menu_item_id === item.id);
-                itemsToRemove.forEach(ci => removeFromCart(ci.menu_item_id, ci.size));
-                toast.success(`${item.name} removed from cart`);
-              }}
-              variant="outline"
-              className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground transition-all duration-300"
-              data-testid={`remove-from-cart-btn-${item.id}`}
-            >
-              Remove from Cart
-            </Button>
-          )}
         </div>
       </div>
     </motion.div>

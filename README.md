@@ -1,4 +1,4 @@
-# The Flavour Junction - Restaurant Web Application
+# Food Hub - Restaurant Web Application
 
 A full-stack restaurant web application with elegant dark theme, featuring menu browsing, shopping cart, checkout with Razorpay integration, and a complete admin panel for managing categories and menu items.
 
@@ -41,8 +41,7 @@ A full-stack restaurant web application with elegant dark theme, featuring menu 
 Before you begin, ensure you have the following installed:
 - **Node.js** (v16 or higher) - [Download](https://nodejs.org/)
 - **Python** (v3.11 or higher) - [Download](https://www.python.org/)
-- **MongoDB** (v4.4 or higher) - [Download](https://www.mongodb.com/try/download/community)
-- **Yarn** package manager - Install with: `npm install -g yarn`
+- **npm** package manager (comes bundled with Node.js)
 
 ## 🚀 Local Setup Instructions
 
@@ -84,24 +83,17 @@ uvicorn server:app --reload --host 0.0.0.0 --port 8001
 Backend will be available at: `http://localhost:8001`
 
 ### 3. Frontend Setup
-
+ 
 Open a new terminal:
-
+ 
 ```bash
 # Navigate to frontend directory
 cd frontend
 
 # Install dependencies
-yarn install
+npm install
 
 # Start the development server
-yarn start
-```
-
-Alternative with npm:
-
-```bash
-npm install
 npm start
 ```
 
@@ -150,7 +142,7 @@ REACT_APP_BACKEND_URL=http://localhost:8001
 ```
 
 Note:
-- Frontend build/dev config loads environment variables via `dotenv` from `craco.config.js`.
+- Frontend loads environment variables automatically via Create React App (`react-scripts`).
 
 ## 🎨 Design Theme
 
@@ -218,9 +210,7 @@ uvicorn server:app --reload --port 8002
 **Dependencies Installation Error:**
 ```bash
 # Clear cache and reinstall
-rm -rf node_modules yarn.lock package-lock.json
-yarn install
-# or
+rm -rf node_modules package-lock.json
 npm install
 ```
 
@@ -303,7 +293,7 @@ the-flavour-junction/
 
 **Frontend:**
 - Update `REACT_APP_BACKEND_URL` to production API URL
-- Build the app: `yarn build`
+- Build the app: `npm run build`
 - Deploy the `build` folder to hosting service
 
 ### Recommended Hosting

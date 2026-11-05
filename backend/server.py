@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -14,28 +14,52 @@ from passlib.context import CryptContext
 from jose import JWTError, jwt
 import razorpay
 import base64
+from contextlib import asynccontextmanager
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger("restaurant_api")
+
 # MongoDB connection
-mongo_url = os.environ['MONGO_URL']
+mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+db = client[os.environ.get('DB_NAME', 'restaurant_db')]
 
 # JWT Configuration
 SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'your-secret-key-change-in-production')
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 1440
+ADMIN_REGISTRATION_KEY = os.environ.get('ADMIN_REGISTRATION_KEY', '')
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
 
 # Razorpay client
-razorpay_client = razorpay.Client(auth=(os.environ.get('RAZORPAY_KEY_ID', ''), os.environ.get('RAZORPAY_KEY_SECRET', '')))
+razorpay_key_id = os.environ.get('RAZORPAY_KEY_ID', '')
+razorpay_key_secret = os.environ.get('RAZORPAY_KEY_SECRET', '')
+razorpay_client = razorpay.Client(auth=(razorpay_key_id, razorpay_key_secret))
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        await db.categories.create_index("order")
+        await db.menu_items.create_index("category_id")
+        await db.orders.create_index([("created_at", -1)])
+        await db.users.create_index("email", unique=True)
+        logger.info("MongoDB database indexes successfully verified.")
+    except Exception as e:
+        logger.warning(f"Note on index creation: {e}")
+    yield
+    client.close()
+    logger.info("MongoDB connection closed.")
+
+app = FastAPI(title="Food Hub API", lifespan=lifespan)
 api_router = APIRouter(prefix="/api")
 
 # Models
@@ -43,6 +67,7 @@ class UserCreate(BaseModel):
     email: str
     password: str
     full_name: str
+    admin_key: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: str
@@ -102,9 +127,16 @@ class Order(BaseModel):
     customer_name: str
     customer_email: str
     customer_phone: str
+    fulfillment_type: str = "delivery"  # delivery, takeaway, dine_in
+    delivery_address: Optional[str] = None
+    table_number: Optional[str] = None
+    notes: Optional[str] = None
     items: List[CartItem]
+    subtotal: float
+    gst_amount: float
+    delivery_fee: float
     total_amount: float
-    status: str = "pending"
+    status: str = "pending"  # pending, paid, preparing, out_for_delivery, completed, cancelled
     razorpay_order_id: Optional[str] = None
     razorpay_payment_id: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -113,8 +145,14 @@ class OrderCreate(BaseModel):
     customer_name: str
     customer_email: str
     customer_phone: str
+    fulfillment_type: str = "delivery"
+    delivery_address: Optional[str] = None
+    table_number: Optional[str] = None
+    notes: Optional[str] = None
     items: List[CartItem]
-    total_amount: float
+
+class OrderStatusUpdate(BaseModel):
+    status: str
 
 class PaymentVerification(BaseModel):
     razorpay_order_id: str
@@ -153,6 +191,12 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
 # Auth routes
 @api_router.post("/auth/register", response_model=Token)
 async def register(user: UserCreate):
+    # Check if this is initial registration or requires registration key
+    users_count = await db.users.count_documents({})
+    if users_count > 0 and ADMIN_REGISTRATION_KEY:
+        if not user.admin_key or user.admin_key != ADMIN_REGISTRATION_KEY:
+            raise HTTPException(status_code=403, detail="Valid admin registration key is required to create an admin account.")
+
     existing_user = await db.users.find_one({"email": user.email}, {"_id": 0})
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -258,7 +302,13 @@ async def delete_menu_item(item_id: str, _: str = Depends(get_current_user)):
 
 @api_router.post("/upload-image")
 async def upload_image(file: UploadFile = File(...), _: str = Depends(get_current_user)):
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Only image files are allowed")
+    
     contents = await file.read()
+    if len(contents) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Image size exceeds maximum limit of 5MB")
+        
     base64_encoded = base64.b64encode(contents).decode('utf-8')
     image_url = f"data:{file.content_type};base64,{base64_encoded}"
     return {"url": image_url}
@@ -266,16 +316,84 @@ async def upload_image(file: UploadFile = File(...), _: str = Depends(get_curren
 # Order routes
 @api_router.post("/orders", response_model=Order)
 async def create_order(order: OrderCreate):
-    order_obj = Order(**order.model_dump())
-    doc = order_obj.model_dump()
-    doc['created_at'] = doc['created_at'].isoformat()
+    if not order.items:
+        raise HTTPException(status_code=400, detail="Cart cannot be empty")
+        
+    # Security: Fetch items from DB to recalculate verified prices (Prevent price tampering)
+    item_ids = [item.menu_item_id for item in order.items]
+    db_items = await db.menu_items.find({"id": {"$in": item_ids}}, {"_id": 0}).to_list(100)
+    db_items_map = {item["id"]: item for item in db_items}
     
-    razorpay_key_id = os.environ.get('RAZORPAY_KEY_ID', '')
+    verified_items: List[CartItem] = []
+    subtotal = 0.0
+    
+    for item in order.items:
+        db_item = db_items_map.get(item.menu_item_id)
+        if not db_item:
+            raise HTTPException(status_code=400, detail=f"Item '{item.name}' is no longer available in the menu")
+            
+        if not db_item.get("is_available", True):
+            raise HTTPException(status_code=400, detail=f"Item '{db_item.get('name')}' is currently sold out")
+            
+        quantity = max(1, min(int(item.quantity), 50))
+        
+        # Verify legitimate price by size
+        if item.size == 'half':
+            unit_price = db_item.get('price_half') or db_item.get('price_full')
+        else:
+            unit_price = db_item.get('price_full') or db_item.get('price_half')
+            
+        if unit_price is None or unit_price <= 0:
+            raise HTTPException(status_code=400, detail=f"Price not available for {db_item.get('name')} ({item.size})")
+            
+        verified_item = CartItem(
+            menu_item_id=db_item["id"],
+            name=db_item["name"],
+            price=float(unit_price),
+            quantity=quantity,
+            size=item.size,
+            image_url=db_item.get("image_url")
+        )
+        verified_items.append(verified_item)
+        subtotal += float(unit_price) * quantity
+        
+    subtotal = round(subtotal, 2)
+    # GST calculation (5% standard restaurant tax in India)
+    gst_amount = round(subtotal * 0.05, 2)
+    
+    # Delivery fee: ₹40 for delivery if under ₹500, free for ₹500+ or takeaway/dine_in
+    if order.fulfillment_type == "delivery" and subtotal < 500:
+        delivery_fee = 40.0
+    else:
+        delivery_fee = 0.0
+        
+    total_amount = round(subtotal + gst_amount + delivery_fee, 2)
+    
+    order_id = str(uuid.uuid4())
+    doc = {
+        "id": order_id,
+        "customer_name": order.customer_name.strip(),
+        "customer_email": order.customer_email.strip(),
+        "customer_phone": order.customer_phone.strip(),
+        "fulfillment_type": order.fulfillment_type,
+        "delivery_address": order.delivery_address,
+        "table_number": order.table_number,
+        "notes": order.notes,
+        "items": [it.model_dump() for it in verified_items],
+        "subtotal": subtotal,
+        "gst_amount": gst_amount,
+        "delivery_fee": delivery_fee,
+        "total_amount": total_amount,
+        "status": "pending",
+        "razorpay_order_id": None,
+        "razorpay_payment_id": None,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
     
     if razorpay_key_id and razorpay_key_id != 'rzp_test_dummy' and not razorpay_key_id.startswith('dummy'):
         try:
             razorpay_order = razorpay_client.order.create({
-                "amount": int(order.total_amount * 100),
+                "amount": int(round(total_amount * 100)),
                 "currency": "INR",
                 "payment_capture": 1
             })
@@ -284,18 +402,48 @@ async def create_order(order: OrderCreate):
             logger.error(f"Razorpay order creation failed: {str(e)}")
             raise HTTPException(status_code=502, detail=f"Payment gateway error: {str(e)}")
     else:
-        logger.info("Using demo mode - no Razorpay integration")
+        logger.info("Demo mode: Order placed without Razorpay payment gateway")
         doc['razorpay_order_id'] = None
         doc['status'] = 'paid'
-    
+        
     await db.orders.insert_one(doc)
-    order_obj.razorpay_order_id = doc['razorpay_order_id']
-    order_obj.status = doc.get('status', 'pending')
-    return order_obj
+    doc['created_at'] = datetime.fromisoformat(doc['created_at'])
+    return Order(**doc)
+
+@api_router.get("/orders/{order_id}", response_model=Order)
+async def get_order_by_id(order_id: str):
+    order = await db.orders.find_one({"id": order_id}, {"_id": 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if isinstance(order.get('created_at'), str):
+        order['created_at'] = datetime.fromisoformat(order['created_at'])
+    return Order(**order)
+
+@api_router.put("/orders/{order_id}/status")
+async def update_order_status(order_id: str, payload: OrderStatusUpdate, _: str = Depends(get_current_user)):
+    valid_statuses = {"pending", "paid", "preparing", "out_for_delivery", "completed", "cancelled"}
+    if payload.status not in valid_statuses:
+        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of {valid_statuses}")
+        
+    result = await db.orders.update_one(
+        {"id": order_id},
+        {"$set": {"status": payload.status}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return {"message": "Order status updated successfully", "status": payload.status}
 
 @api_router.post("/verify-payment")
 async def verify_payment(verification: PaymentVerification):
     try:
+        # Verify order exists and matches razorpay_order_id
+        db_order = await db.orders.find_one({"id": verification.order_id}, {"_id": 0})
+        if not db_order:
+            raise HTTPException(status_code=404, detail="Order not found")
+            
+        if db_order.get("razorpay_order_id") != verification.razorpay_order_id:
+            raise HTTPException(status_code=400, detail="Razorpay order ID mismatch")
+            
         params_dict = {
             'razorpay_order_id': verification.razorpay_order_id,
             'razorpay_payment_id': verification.razorpay_payment_id,
@@ -311,8 +459,11 @@ async def verify_payment(verification: PaymentVerification):
             }}
         )
         return {"status": "success", "message": "Payment verified successfully"}
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.error(f"Payment verification failed: {e}")
+        raise HTTPException(status_code=400, detail="Signature verification failed")
 
 @api_router.get("/orders", response_model=List[Order])
 async def get_orders(_: str = Depends(get_current_user)):
@@ -324,24 +475,24 @@ async def get_orders(_: str = Depends(get_current_user)):
 
 @api_router.get("/")
 async def root():
-    return {"message": "The Flavour Junction API"}
+    return {
+        "restaurant": "Food Hub",
+        "status": "online",
+        "version": "2.0.0"
+    }
 
 app.include_router(api_router)
+
+# Allowed CORS origins
+allowed_origins_env = os.environ.get('CORS_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000')
+origins = [o.strip() for o in allowed_origins_env.split(',') if o.strip()]
+if not origins or '*' in origins:
+    origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()
