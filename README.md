@@ -89,8 +89,8 @@ Use the pre-configured administrator account to access the operations suite imme
 | Field | Value | Notes |
 | :--- | :--- | :--- |
 | **Login URL** | `http://localhost:3000/admin/login` | Also accessible via the footer "Staff Access" link |
-| **Email** | `amitbora007@gmail.com` | Primary Superadmin Account |
-| **Password** | `amitbora12` | Pre-seeded credentials |
+| **Email** | `xxxxxxx@gmail.com` | Primary Superadmin Account |
+| **Password** | `xxxxxx` | Pre-seeded credentials |
 | **Registration Key** | `admin123` | Required only when registering new manager accounts |
 
 ---

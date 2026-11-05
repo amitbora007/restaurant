@@ -86,8 +86,8 @@ async function capture() {
 
     // Login to Admin
     console.log('Logging in as admin (amitbora007@gmail.com)...');
-    await page.type('input[name="email"]', 'amitbora007@gmail.com');
-    await page.type('input[name="password"]', 'amitbora12');
+    await page.type('input[name="email"]', 'xxxxxxxxx@gmail.com');
+    await page.type('input[name="password"]', 'xxxxxxxxxxxx');
     await page.click('button[type="submit"]');
 
     // Wait for navigation or token storage
