@@ -114,11 +114,12 @@ class MenuItemCreate(BaseModel):
     is_available: bool = True
 
 class CartItem(BaseModel):
+    model_config = ConfigDict(extra="ignore")
     menu_item_id: str
     name: str
     price: float
     quantity: int
-    size: str
+    size: str = "full"
     image_url: Optional[str] = None
 
 class Order(BaseModel):
@@ -131,10 +132,10 @@ class Order(BaseModel):
     delivery_address: Optional[str] = None
     table_number: Optional[str] = None
     notes: Optional[str] = None
-    items: List[CartItem]
-    subtotal: float
-    gst_amount: float
-    delivery_fee: float
+    items: List[CartItem] = Field(default_factory=list)
+    subtotal: float = 0.0
+    gst_amount: float = 0.0
+    delivery_fee: float = 0.0
     total_amount: float
     status: str = "pending"  # pending, paid, preparing, out_for_delivery, completed, cancelled
     razorpay_order_id: Optional[str] = None
@@ -416,7 +417,12 @@ async def get_order_by_id(order_id: str):
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     if isinstance(order.get('created_at'), str):
-        order['created_at'] = datetime.fromisoformat(order['created_at'])
+        try:
+            order['created_at'] = datetime.fromisoformat(order['created_at'])
+        except Exception:
+            order['created_at'] = datetime.now(timezone.utc)
+    if not order.get('subtotal') and order.get('total_amount'):
+        order['subtotal'] = order['total_amount']
     return Order(**order)
 
 @api_router.put("/orders/{order_id}/status")
@@ -470,7 +476,12 @@ async def get_orders(_: str = Depends(get_current_user)):
     orders = await db.orders.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
     for order in orders:
         if isinstance(order.get('created_at'), str):
-            order['created_at'] = datetime.fromisoformat(order['created_at'])
+            try:
+                order['created_at'] = datetime.fromisoformat(order['created_at'])
+            except Exception:
+                order['created_at'] = datetime.now(timezone.utc)
+        if not order.get('subtotal') and order.get('total_amount'):
+            order['subtotal'] = order['total_amount']
     return orders
 
 @api_router.get("/")

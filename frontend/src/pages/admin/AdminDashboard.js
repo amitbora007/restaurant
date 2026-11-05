@@ -75,7 +75,7 @@ const AdminDashboard = () => {
           </div>
           <div className="flex items-center gap-3">
             <Link to="/admin/menu-items">
-              <Button size="sm" variant="outline" className="border-border">
+              <Button size="sm" variant="outline" className="border-border hover:bg-secondary hover:text-foreground hover:border-primary/50">
                 Manage Menu
               </Button>
             </Link>
@@ -182,7 +182,7 @@ const AdminDashboard = () => {
               <p className="text-xs text-muted-foreground">Latest transactions placed through the platform</p>
             </div>
             <Link to="/admin/orders">
-              <Button variant="ghost" size="sm" className="text-xs text-primary gap-1">
+              <Button variant="ghost" size="sm" className="text-xs text-primary hover:text-primary hover:bg-primary/10 gap-1">
                 View All <ArrowRight className="h-3.5 w-3.5" />
               </Button>
             </Link>
@@ -224,7 +224,7 @@ const AdminDashboard = () => {
                       ₹{order.total_amount?.toFixed(2)}
                     </span>
                     <Link to="/admin/orders">
-                      <Button variant="outline" size="sm" className="text-xs h-8">
+                      <Button variant="outline" size="sm" className="text-xs h-8 hover:bg-secondary hover:text-foreground hover:border-primary/50">
                         Manage
                       </Button>
                     </Link>

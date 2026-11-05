@@ -81,7 +81,7 @@ const AdminOrders = () => {
             size="sm"
             onClick={fetchOrders}
             disabled={loading}
-            className="gap-2 self-start sm:self-auto"
+            className="gap-2 self-start sm:self-auto border-border/80 hover:bg-secondary hover:text-foreground hover:border-primary/50"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} /> Refresh
           </Button>
@@ -101,7 +101,7 @@ const AdminOrders = () => {
               className={`px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                 filter === tab.id
                   ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground'
+                  : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-secondary/50'
               }`}
             >
               {tab.label}

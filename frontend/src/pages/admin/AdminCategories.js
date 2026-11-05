@@ -207,6 +207,7 @@ const AdminCategories = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() => handleEdit(cat)}
+                  className="hover:text-primary hover:bg-primary/10"
                   aria-label={`Edit ${cat.name}`}
                   data-testid={`edit-category-${cat.id}`}
                 >
@@ -216,7 +217,7 @@ const AdminCategories = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() => setDeleteTarget(cat)}
-                  className="text-destructive hover:bg-destructive/10"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
                   aria-label={`Delete ${cat.name}`}
                   data-testid={`delete-category-${cat.id}`}
                 >

@@ -74,7 +74,7 @@ export const Layout = ({ children }) => {
               <Button
                 variant="outline"
                 size="sm"
-                className="border-border/80 hover:border-primary/50 text-foreground hover:text-primary gap-2 px-3 py-2"
+                className="border-border/80 hover:border-primary text-foreground hover:text-primary hover:bg-primary/10 gap-2 px-3 py-2"
                 data-testid="cart-icon-button"
               >
                 <ShoppingCart className="h-4 w-4" />
@@ -97,7 +97,7 @@ export const Layout = ({ children }) => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-foreground hover:text-primary"
+                className="text-foreground hover:text-primary hover:bg-primary/10"
                 data-testid="mobile-cart-btn"
               >
                 <ShoppingCart className="h-5 w-5" />

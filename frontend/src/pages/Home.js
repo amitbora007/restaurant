@@ -77,7 +77,7 @@ const Home = () => {
               <Button
                 size="lg"
                 variant="outline"
-                className="w-full sm:w-auto border-border/80 hover:border-primary/50 text-foreground hover:bg-card/80 px-8 py-6 text-base rounded-md"
+                className="w-full sm:w-auto border-border/80 hover:border-primary text-foreground hover:text-primary hover:bg-primary/10 px-8 py-6 text-base rounded-md transition-colors"
               >
                 Discover Our Heritage
               </Button>
@@ -163,7 +163,7 @@ const Home = () => {
               Al dente pastas tossed in velvety herb-infused creams, handcrafted gourmet burgers, and artisanal mocktails shaken to order.
             </p>
             <span className="text-xs uppercase tracking-wider text-primary font-medium">
-              Mix Sauce Penne &bull; TFJ Burger &bull; Virgin Mojitos
+              Mix Sauce Penne &bull; FH Burger &bull; Virgin Mojitos
             </span>
           </motion.div>
         </div>
@@ -299,7 +299,7 @@ const Home = () => {
                 </Button>
               </Link>
               <a href="tel:+919876543210" className="w-full sm:w-auto">
-                <Button variant="outline" className="w-full sm:w-auto border-border hover:border-primary px-6 py-6 gap-2">
+                <Button variant="outline" className="w-full sm:w-auto border-border hover:border-primary text-foreground hover:bg-secondary px-6 py-6 gap-2 transition-colors">
                   <Phone className="h-4 w-4 text-primary" /> Call for Table
                 </Button>
               </a>

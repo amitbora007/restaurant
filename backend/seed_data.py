@@ -61,7 +61,7 @@ menu_items = [
     {"id": "item_27", "name": "Veg Burger", "category_id": "cat_4", "price_full": 49, "image_url": "https://images.unsplash.com/photo-1520072959219-c595dc870360?w=400&q=80", "is_available": True},
     {"id": "item_28", "name": "Veg Cheese Burger", "category_id": "cat_4", "price_full": 59, "image_url": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&q=80", "is_available": True},
     {"id": "item_29", "name": "Veg Paneer Burger", "category_id": "cat_4", "price_full": 79, "image_url": "https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?w=400&q=80", "is_available": True},
-    {"id": "item_30", "name": "TFJ Special Burger", "category_id": "cat_4", "price_full": 99, "image_url": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=400&q=80", "is_available": True},
+    {"id": "item_30", "name": "FH Special Burger", "category_id": "cat_4", "price_full": 99, "image_url": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=400&q=80", "is_available": True},
 
     {"id": "item_31", "name": "Red Sauce Pasta", "category_id": "cat_6", "price_full": 99, "image_url": "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400&q=80", "is_available": True},
     {"id": "item_32", "name": "White Sauce Pasta", "category_id": "cat_6", "price_full": 119, "image_url": "https://images.unsplash.com/photo-1611270629569-8b357cb88da9?w=400&q=80", "is_available": True},

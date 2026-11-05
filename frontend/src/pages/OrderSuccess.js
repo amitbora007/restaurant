@@ -207,12 +207,12 @@ const OrderSuccess = () => {
         {/* Back Actions */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <Link to="/menu" className="w-full sm:w-auto">
-            <Button variant="outline" className="w-full sm:w-auto gap-2">
+            <Button variant="outline" className="w-full sm:w-auto gap-2 hover:bg-secondary hover:text-foreground hover:border-primary/50">
               <ArrowLeft className="h-4 w-4" /> Order More Dishes
             </Button>
           </Link>
           <a href="tel:+919876543210" className="w-full sm:w-auto">
-            <Button variant="ghost" className="w-full sm:w-auto text-muted-foreground hover:text-foreground gap-2">
+            <Button variant="ghost" className="w-full sm:w-auto text-muted-foreground hover:text-foreground hover:bg-secondary gap-2">
               <Phone className="h-4 w-4 text-primary" /> Questions? Call Kitchen
             </Button>
           </a>

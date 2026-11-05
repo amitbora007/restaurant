@@ -17,8 +17,8 @@
         --secondary-foreground: 45 20% 94%;
         --muted: 240 6% 12%;                /* #1c1c22 */
         --muted-foreground: 240 5% 65%;     /* #a0a0aa */
-        --accent: 43 74% 52%;
-        --accent-foreground: 240 10% 4%;
+        --accent: 240 6% 16%;               /* #25252d - elevated dark surface */
+        --accent-foreground: 45 20% 96%;    /* #f7f6f2 - warm white */
         --destructive: 0 72% 51%;           /* #dc2626 */
         --destructive-foreground: 0 0% 98%;
         --border: 240 6% 18%;               /* #2c2c34 */

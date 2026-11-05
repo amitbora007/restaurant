@@ -209,6 +209,7 @@ const Menu = () => {
             <Button
               variant="outline"
               size="sm"
+              className="hover:bg-secondary hover:text-foreground hover:border-primary/50"
               onClick={() => {
                 setSearchQuery('');
                 setSelectedCategory('all');

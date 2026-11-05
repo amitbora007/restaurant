@@ -39,7 +39,7 @@ const AdminLayout = ({ children }) => {
             <Menu className="h-5 w-5 text-foreground" />
           </Button>
           <div className="flex items-center gap-2">
-            <span className="font-serif font-bold text-lg text-primary">TFJ Admin</span>
+            <span className="font-serif font-bold text-lg text-primary">FH Admin</span>
             {currentNav && (
               <span className="text-xs text-muted-foreground font-medium border-l border-border pl-2">
                 {currentNav.label}
@@ -103,7 +103,9 @@ const AdminLayout = ({ children }) => {
                       <Button
                         variant={isActive ? 'default' : 'ghost'}
                         className={`w-full justify-start gap-3 ${
-                          isActive ? 'bg-primary text-primary-foreground font-semibold' : 'text-muted-foreground'
+                          isActive
+                            ? 'bg-primary text-primary-foreground font-semibold'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
                         }`}
                       >
                         <Icon className="h-4 w-4" />
@@ -116,14 +118,14 @@ const AdminLayout = ({ children }) => {
 
               <div className="pt-4 border-t border-border/60 space-y-2">
                 <Link to="/" target="_blank" rel="noreferrer">
-                  <Button variant="outline" className="w-full justify-start gap-3 text-xs mb-2">
+                  <Button variant="outline" className="w-full justify-start gap-3 text-xs mb-2 text-foreground hover:bg-secondary hover:border-primary/50">
                     <ExternalLink className="h-4 w-4" /> View Live Restaurant
                   </Button>
                 </Link>
                 <Button
                   variant="ghost"
                   onClick={handleLogout}
-                  className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10"
+                  className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10"
                 >
                   <LogOut className="h-4 w-4" /> Logout
                 </Button>
@@ -139,7 +141,7 @@ const AdminLayout = ({ children }) => {
           <div className="mb-8 pb-6 border-b border-border/60">
             <div className="flex items-center gap-2 mb-1">
               <ShieldCheck className="h-5 w-5 text-primary" />
-              <h1 className="text-xl font-serif font-bold text-foreground">TFJ Admin</h1>
+              <h1 className="text-xl font-serif font-bold text-foreground">FH Admin</h1>
             </div>
             <p className="text-xs text-muted-foreground tracking-wide">
               Kitchen & Menu Operations
@@ -157,7 +159,7 @@ const AdminLayout = ({ children }) => {
                     className={`w-full justify-start gap-3 text-sm ${
                       isActive
                         ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
                     }`}
                     data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                   >
@@ -175,7 +177,7 @@ const AdminLayout = ({ children }) => {
             <Button
               variant="outline"
               size="sm"
-              className="w-full justify-start gap-2 text-xs border-border/80 hover:border-primary/50 text-muted-foreground hover:text-foreground"
+              className="w-full justify-start gap-2 text-xs border-border/80 hover:border-primary/50 text-muted-foreground hover:text-foreground hover:bg-secondary"
             >
               <ExternalLink className="h-3.5 w-3.5" /> View Public Site
             </Button>

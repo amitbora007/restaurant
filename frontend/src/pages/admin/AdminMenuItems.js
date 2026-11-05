@@ -353,6 +353,7 @@ const AdminMenuItems = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() => handleEdit(item)}
+                  className="hover:text-primary hover:bg-primary/10"
                   aria-label={`Edit ${item.name}`}
                   data-testid={`edit-item-${item.id}`}
                 >
@@ -362,7 +363,7 @@ const AdminMenuItems = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() => setDeleteTarget(item)}
-                  className="text-destructive hover:bg-destructive/10"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
                   aria-label={`Delete ${item.name}`}
                   data-testid={`delete-item-${item.id}`}
                 >
